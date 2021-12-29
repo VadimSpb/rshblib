@@ -14,7 +14,8 @@ class S2tObj:
             self.report = []
 
 
-    def transform(
+
+    def fit(
             self,
             tab_name_oracle=None,
             tab_name_hive=None,
@@ -25,6 +26,7 @@ class S2tObj:
             col_type=None,
             nullable=None
     ):
+
 
 
 
