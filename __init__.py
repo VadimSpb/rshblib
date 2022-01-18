@@ -1,4 +1,6 @@
 try:
-    from s2t_compiler import *
-except ImportError:
-    from .s2t_compiler import *
+#     from s2t_compiler import *
+    from connect import *
+except:
+#     from .s2t_compiler import *
+    from .connect import *
