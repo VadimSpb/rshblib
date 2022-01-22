@@ -3,119 +3,112 @@ import pandas as pd
 
 class S2tObj:
 
-    def __init__(self, df):
-        try:
-            df.__class__ = pd.core.frame.DataFrame
-        except TypeError:
-            print('Use pandas Dataframe please')
-        else:
-            self.stencil = df
-            self.len = len(df.index)
-            self.report = []
+    def __init__(self):
+        self.phys_model = None
+        self.source_sheet = None
+        self.target_sheet = None
+        self.mapping_sheet = None
+        self.len = None
+        self.info = None
 
+        #
+        # try:
+        #     df.__class__ = pd.core.frame.DataFrame
+        # except TypeError:
+        #     print('Use pandas Dataframe please')
+        # else:
+        #     self.stencil = df
+        #     self.len = len(df.index)
+        #     self.report = []
 
+    def form(self,
+             source_db='Oracle',
+             source_schema='cftf02',
+             target_db='ODS',
+             tab_name_source=None,
+             tab_name_target=None,
+             tab_comment=None,
+             col_name=None,
+             col_comment=None,
+             col_index=None,
+             col_type=None,
+             data_length=None,
+             nullable=None
+             ):
+        self.len = tab_name_source.size
 
-    def fit(
-            self,
-            tab_name_oracle=None,
-            tab_name_hive=None,
-            tab_comment=None,
-            col_name=None,
-            col_comment=None,
-            col_index=None,
-            col_type=None,
-            nullable=None
-    ):
+        # Init source sheet:
+        self.source_sheet = pd.DataFrame()
+        self.source_sheet['Система-источник'] = pd.Series([source_db for _ in range(self.len)])
+        self.source_sheet['Схема в системе-источнике'] = source_schema
+        self.source_sheet['Наименование таблицы'] = tab_name_source
+        self.source_sheet['Наименование атрибута'] = col_name
+        self.source_sheet['Комментарий к атрибуту'] = col_comment
+        self.source_sheet['Тип данных'] = col_type
+        self.source_sheet['РК'] = ''
+        self.source_sheet['Not Null'] = nullable
+        self.source_sheet['Описание таблицы'] = tab_comment
+        self.source_sheet['Схема таблицы приёмника'] = target_db
+        self.source_sheet['Таблица-приёмник'] = tab_name_target
+        self.source_sheet['Набор данных'] = ''
+        self.source_sheet['Поле набора данных'] = ''
 
+        # Init target's tables sheet:
+        self.target_sheet = pd.DataFrame()
 
+        tabs = (
+            self.source_sheet[['Схема таблицы приёмника', 'Описание таблицы']]
+                .groupby('TAB_NAME_ODS').nth(0, dropna='any')
+                .reset_index()
+        )
+        self.target_sheet['База данных'] = pd.Series([target_db for _ in range(len(tabs.index))])
+        self.target_sheet['Целевая схема данных'] = target_db
+        self.target_sheet['Наименование таблицы'] = tabs['Схема таблицы приёмника']
+        self.target_sheet['Краткое описание таблицы'] = tabs['Описание таблицы']
+        self.target_sheet['Расширенное описание таблицы'] = ''
+        self.target_sheet['Обработка ошибок'] = ''
+        self.target_sheet['Дополнительные описания и руководства'] = ''
 
+        # Init mapping sheet:
+        self.mapping_sheet = pd.DataFrame()
+        # source columns
+        self.mapping_sheet['Наименование'] = tab_name_source
+        self.mapping_sheet['Код атрибута '] = col_name
+        self.mapping_sheet['Описание атрибута'] = col_comment
+        self.mapping_sheet['Тип данных'] = col_type
+        self.mapping_sheet['Комментарий'] = ''
+        self.mapping_sheet['Алгоритм'] = ''
+        # target columns
+        self.mapping_sheet['Схема'] = target_db
+        self.mapping_sheet['Таблица'] = tab_name_target
+        self.mapping_sheet['Код атрибута'] = col_index
+        self.mapping_sheet['Атрибут'] = col_name
+        self.mapping_sheet['Описание атрибута'] = col_comment
+        self.mapping_sheet['Расширенное описание атрибута'] = ''
+        self.mapping_sheet['Тип данных'] = col_type
+        self.mapping_sheet['Длина'] = data_length
+        self.mapping_sheet['PK'] = ''
+        self.mapping_sheet['FK'] = ''
+        self.mapping_sheet['Not Null'] = nullable
+        self.mapping_sheet['Проверка'] = ''
+        self.mapping_sheet['Отслеживание новых значений'] = ''
+        self.mapping_sheet['Ссылка на атрибут сущности'] = ''
+        # status columns
+        self.mapping_sheet['Статус'] = ''
+        self.mapping_sheet['Версия'] = ''
 
+        # Init physical model:
+        self.phys_model = pd.DataFrame()
 
-
-
-
-#
-# class SimpleTable:
-#     """
-#     base class for compile source-to-target document
-#     """
-#     def __init__(self,
-#                  stencil_df,
-#                  # tab_name_col=self.stencil_df.columns[0],
-#                  # tab_comment_col=self.stencil_df.columns[1],
-#                  # col_name_col=stencil_df.columns[2],
-#                  # col_comment_col=stencil_df.columns[3]
-#                  tab_name_col=None,
-#                  tab_comment_col=None,
-#                  col_name_col=None,
-#                  col_comment_col=None):
-#         """
-#         Init source-to-target document
-#         :param fresh_df: pd.DataFrame
-#         """
-#         # self.fresh_df = fresh_df.drop_duplicates()
-#         try:
-#             stencil_df.__class__ == pd.core.frame.DataFrame
-#         except TypeError:
-#             print('Use pandas Dataframe please')
-#         else:
-#             self.stencil_df = stencil_df
-#             self.len = self.stencil_df.index
-#             self.source_sheet = None
-#             self.target_sheet = None
-#             self.mapping_sheet = None
-#             self.history_sheet = None
-#
-#     def init_S2T(self):
-#         """"""
-#
-#
-#     def prettify(self) -> pd.core.frame.DataFrame:
-#         """
-#         Remove all whitespace symbols from table names and  column names
-#         :return: pd.core.frame.DataFrame
-#         """
-#         pass
-#
-#
-#     def analyse(self):
-#         """
-#
-#         :return:
-#         """
-#         pass
-#
-#
-#     # Дополнить фильтр только таблиц с именами таблиц и атрибутов
-#     # def prettify(self, cols=[]):
-#     #     """
-#     #     Strip whitespace symbols and change all values to uppercase
-#     #     :return:
-#     #     """
-#     #     for col in cols:
-#     #         if col in self.stencil_df.columns:
-#     #             self.stencil_df[col] = self.stencil_df[col].str.strip('\s+').str.upper()
-#
-#     def init_s2t(self,
-#                  tab_name,
-#                  tab_comment,
-#                  attr,
-#                  attr_comment,
-#                  data_type=None,
-#                  not_null=None):
-#         """
-#
-#         :param tab_name: pandas array with table's names
-#         :param tab_comment: pandas array with table's descriptions
-#         :param attr: pandas array with attribute's names
-#         :param attr_comment: pandas array with attribute's descriptions
-#         :param data_type: pandas array with attribute's data types
-#         :param not_null: pandas array with (boolean)
-#         :return: source_to_target document as pandas DataFrame
-#         """
-#         self.tab_name = tab_name
-#         self.tab_comment = tab_comment
-#         self.attr = attr
-#         self.attr_comment = attr_comment
-#         self.data_type = data_type
-#         self.not_null = not_null
+        self.phys_model['Схема данных'] = pd.Series([source_schema for _ in range(self.len)])
+        self.phys_model['Наименование таблицы'] = tab_name_source
+        self.phys_model['Наименование атрибута'] = col_name
+        self.phys_model['Описание атрибута'] = col_comment
+        self.phys_model['Тип данных атрибута'] = col_type
+        self.phys_model['PK'] = ''
+        self.phys_model['FK'] = ''
+        self.phys_model['UK'] = ''
+        self.phys_model['Not Null'] = nullable
+        self.phys_model['Описание таблицы'] = tab_comment
+        self.phys_model['Ссылка на сущность БТ'] = ''
+        self.phys_model['Ссылка на атрибут БТ'] = ''
