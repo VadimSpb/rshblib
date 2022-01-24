@@ -57,13 +57,13 @@ class S2tObj:
         self.target_sheet = pd.DataFrame()
 
         tabs = (
-            self.source_sheet[['Схема таблицы приёмника', 'Описание таблицы']]
-                .groupby('TAB_NAME_ODS').nth(0, dropna='any')
+            self.source_sheet[['Схема таблицы приёмника', 'Таблица-приёмник', 'Описание таблицы']]
+                .groupby('Таблица-приёмник').nth(0, dropna='any')
                 .reset_index()
         )
         self.target_sheet['База данных'] = pd.Series([target_db for _ in range(len(tabs.index))])
         self.target_sheet['Целевая схема данных'] = target_db
-        self.target_sheet['Наименование таблицы'] = tabs['Схема таблицы приёмника']
+        self.target_sheet['Наименование таблицы'] = tabs['Таблица-приёмник']
         self.target_sheet['Краткое описание таблицы'] = tabs['Описание таблицы']
         self.target_sheet['Расширенное описание таблицы'] = ''
         self.target_sheet['Обработка ошибок'] = ''
