@@ -10,32 +10,35 @@ class S2tObj:
         self.mapping_sheet = None
         self.len = None
         self.info = None
+        self._lens = []
 
-        #
-        # try:
-        #     df.__class__ = pd.core.frame.DataFrame
-        # except TypeError:
-        #     print('Use pandas Dataframe please')
-        # else:
-        #     self.stencil = df
-        #     self.len = len(df.index)
-        #     self.report = []
+    def _check_pd_series(self, series=None):
+        if type(series) is None:
+            return None
+        if type(series) == pd.core.series.Series:
+            self._lens.append(len(series.index))
+            return series
+        else:
+            # print('Use pandas.core.series.Series. Input data was changed to None')
+            return None
 
     def form(self,
              source_db='Oracle',
              source_schema='cftf02',
              target_db='ODS',
-             tab_name_source=None,
-             tab_name_target=None,
-             tab_comment=None,
-             col_name=None,
-             col_comment=None,
-             col_index=None,
-             col_type=None,
-             data_length=None,
-             nullable=None
+             tab_name_source=_check_pd_series(None),
+             tab_name_target=_check_pd_series(None),
+             tab_comment=_check_pd_series(None),
+             col_name=_check_pd_series(None),
+             col_comment=_check_pd_series(None),
+             col_index=_check_pd_series(None),
+             col_type=_check_pd_series(None),
+             data_length=_check_pd_series(None),
+             nullable=_check_pd_series(None)
              ):
         self.len = tab_name_source.size
+        if len(set(self._lens)) > 1:
+            print(f'All pd.series should have the same length, but {self._lens} are now')
 
         # Init source sheet:
         self.source_sheet = pd.DataFrame()
@@ -62,7 +65,7 @@ class S2tObj:
                 .reset_index()
         )
         self.target_sheet['База данных'] = pd.Series([target_db for _ in range(len(tabs.index))])
-        self.target_sheet['Целевая схема данных'] = target_db
+        self.target_sheet['Целевая схема данных'] = source_schema
         self.target_sheet['Наименование таблицы'] = tabs['Таблица-приёмник']
         self.target_sheet['Краткое описание таблицы'] = tabs['Описание таблицы']
         self.target_sheet['Расширенное описание таблицы'] = ''
