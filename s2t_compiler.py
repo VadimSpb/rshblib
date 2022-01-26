@@ -15,34 +15,49 @@ class S2tObj:
     def _check_pd_series(self, series=None):
         if type(series) is None:
             return None
-        if type(series) == pd.core.series.Series:
+        elif type(series) == pd.core.series.Series:
             self._lens.append(len(series.index))
             return series
+        elif type(series) in [str, int, float]:
+            series = str(series)
+            return pd.Series([series for _ in range(self.len)])
         else:
-            # print('Use pandas.core.series.Series. Input data was changed to None')
+            print('Use pandas.core.series.Series. Input data was changed to None')
             return None
 
     def form(self,
              source_db='Oracle',
              source_schema='cftf02',
              target_db='ODS',
-             tab_name_source=_check_pd_series(None),
-             tab_name_target=_check_pd_series(None),
-             tab_comment=_check_pd_series(None),
-             col_name=_check_pd_series(None),
-             col_comment=_check_pd_series(None),
-             col_index=_check_pd_series(None),
-             col_type=_check_pd_series(None),
-             data_length=_check_pd_series(None),
-             nullable=_check_pd_series(None)
+             tab_name_source=None,
+             tab_name_target=None,
+             tab_comment=None,
+             col_name=None,
+             col_comment=None,
+             col_index=None,
+             col_type=None,
+             data_length=None,
+             nullable=None
              ):
         self.len = tab_name_source.size
+        source_db = self._check_pd_series(source_db),
+        source_schema = self._check_pd_series(source_schema),
+        target_db = self._check_pd_series(target_db),
+        tab_name_source = self._check_pd_series(tab_name_source),
+        tab_name_target = self._check_pd_series(tab_name_target),
+        tab_comment = self._check_pd_series(tab_comment),
+        col_name = self._check_pd_series(col_name),
+        col_comment = self._check_pd_series(col_comment),
+        col_index = self._check_pd_series(col_index),
+        col_type = self._check_pd_series(col_type),
+        data_length = self._check_pd_series(data_length),
+        nullable = self._check_pd_series(nullable)
         if len(set(self._lens)) > 1:
             print(f'All pd.series should have the same length, but {self._lens} are now')
 
         # Init source sheet:
         self.source_sheet = pd.DataFrame()
-        self.source_sheet['Система-источник'] = pd.Series([source_db for _ in range(self.len)])
+        self.source_sheet['Система-источник'] = source_db
         self.source_sheet['Схема в системе-источнике'] = source_schema
         self.source_sheet['Наименование таблицы'] = tab_name_source
         self.source_sheet['Наименование атрибута'] = col_name
@@ -64,7 +79,7 @@ class S2tObj:
                 .groupby('Таблица-приёмник').nth(0, dropna='any')
                 .reset_index()
         )
-        self.target_sheet['База данных'] = pd.Series([target_db for _ in range(len(tabs.index))])
+        self.target_sheet['База данных'] = target_db
         self.target_sheet['Целевая схема данных'] = source_schema
         self.target_sheet['Наименование таблицы'] = tabs['Таблица-приёмник']
         self.target_sheet['Краткое описание таблицы'] = tabs['Описание таблицы']
